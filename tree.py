@@ -1,5 +1,5 @@
 from sklearn import tree
-import numpy as np
+import autograd.numpy as np
 from sklearn.metrics import accuracy_score
 
 

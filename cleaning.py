@@ -3,10 +3,9 @@ from __future__ import print_function
 from future.standard_library import install_aliases
 import autograd.numpy as np
 from tree import NoisyLabeler
-from autograd.optimizers import adam
 from autograd.scipy.misc import logsumexp
 from autograd import grad
-from util import data_reader
+from util import data_reader, image_saver
 install_aliases()
 
 
@@ -14,13 +13,19 @@ class Cleaner():
 
     def __init__(self, theta):
         reader = data_reader()
-        # saver = image_saver()
         n, a, b, c, d = reader.load_mnist()
+
+        noisy = NoisyLabeler(a, b, c, d)
+        noisy.power_level()
+        a, bad, c, dad = noisy.get_noisy_train_valid()
+
+        self.true_train = b[:10000]
+        self.true_valid = d[:5000]
 
         self.train_data = np.round(a)[:10000]
         self.valid_data = np.round(c)[:5000]
-        self.train_labels = b[:10000]
-        self.valid_labels = d[:5000]
+        self.train_labels = bad[:10000]
+        self.valid_labels = dad[:5000]
 
         self.w = np.zeros((self.train_labels.shape[1], self.train_data.shape[1]))
         self.theta = theta
@@ -31,45 +36,41 @@ class Cleaner():
 
     def weighted_likelihood(self, x, y, w, theta, likelihood_fcn):
         likelihood = likelihood_fcn(x, w)
-        return np.sum(np.multiply(y, np.log(np.dot(theta, likelihood.T)).T))
+        return np.sum(np.multiply(y, np.dot(theta, likelihood.T).T))
 
     def train_logistic(self, learning_rate=0.01, epoch=500):
         gradient = grad(self.weighted_likelihood, argnum=2)
+        gradient_theta = grad(self.weighted_likelihood, argnum=3)
         for i in range(epoch):
-            self.w += gradient(self.train_data, self.train_labels, self.w, self.theta, self.logistic_likelihood)
+            print("This is iteration {}.".format(i))
+            self.w += gradient(self.train_data, self.train_labels, self.w, self.theta, self.logistic_likelihood) * learning_rate
+        for i in range(100):
+            print("This is iteration {} optimizing theta.".format(i))
+            self.theta += gradient_theta(self.train_data, self.train_labels, self.w, self.theta, self.logistic_likelihood) * 0.0001
+        print(self.theta)
         return self.w
 
     def metrics(self):
         # likelihood
-        ll = np.multiply(self.train_labels, pred_ll(self.train_data, self.w))
-        test_ll = np.multiply(self.valid_labels, pred_ll(self.valid_data, self.w))
+        ll = np.multiply(self.true_train, pred_ll(self.train_data, self.w))
+        test_ll = np.multiply(self.true_valid, pred_ll(self.valid_data, self.w))
 
         # accuracy
         pred = pred_ll(self.train_data, self.w)
         test_pred = pred_ll(self.valid_data, self.w)
         print("average predictive log ll for training set is:")
-        print(np.sum(ll)/30)
+        print(np.sum(ll)/10000)
         print("average predictive log ll for test set is:")
-        print(np.sum(test_ll)/10000)
+        print(np.sum(test_ll)/5000)
 
         print("average predictive accuracy for training set is:")
-        print(predictive_accuracy(pred, self.train_labels))
+        print(predictive_accuracy(pred, self.true_train))
         print("average predictive accuracy for test set is:")
-        print(predictive_accuracy(test_pred, self.valid_labels))
+        print(predictive_accuracy(test_pred, self.true_valid))
 
 
 def logistic_ll(x, w):
     return np.dot(x, w.T) - np.tile(logsumexp(np.dot(x, w.T), axis=1), 10).reshape(10, x.shape[0]).T
-
-
-def fit_logistic(images, labels):
-    x = images
-    y = labels
-    w = np.zeros((labels.shape[1], images.shape[1]))
-    gradient = grad(logit_ll, argnum=2)
-    for i in range(5000):
-        w += gradient(x, y, w) * 0.001
-    return w
 
 
 def pred_ll(x, w):
@@ -85,6 +86,9 @@ def predictive_accuracy(proposed, true):
 
 
 if __name__ == '__main__':
-    cleaner = Cleaner(0)
-    cleaner.train_logistic()
+    # cleaner = Cleaner(np.eye(10))
+    cleaner = Cleaner(np.eye(10) * 0.8 + 0.02)
+    cleaner.train_logistic(learning_rate=0.001, epoch=500)
     cleaner.metrics()
+    saver = image_saver()
+    saver.save_images(cleaner.w, 'theta')

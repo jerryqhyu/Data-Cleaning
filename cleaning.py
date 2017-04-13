@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from future.standard_library import install_aliases
 import autograd.numpy as np
-from tree import NoisyLabeler
+from labeler import NoisyLabeler
 from autograd.scipy.misc import logsumexp
 from autograd import grad
 from util import data_reader, image_saver
@@ -15,7 +15,7 @@ class Cleaner():
         reader = data_reader()
         n, a, b, c, d = reader.load_mnist()
 
-        noisy = NoisyLabeler(a, b, c, d)
+        noisy = NoisyLabeler(a, b, c, d, power_level=9)
         noisy.power_level()
         a, bad, c, dad = noisy.get_noisy_train_valid()
 
@@ -41,14 +41,21 @@ class Cleaner():
     def train_logistic(self, learning_rate=0.01, epoch=500):
         gradient = grad(self.weighted_likelihood, argnum=2)
         gradient_theta = grad(self.weighted_likelihood, argnum=3)
-        for i in range(epoch):
+        for i in range(50):
             print("This is iteration {}.".format(i))
             self.w += gradient(self.train_data, self.train_labels, self.w,
                                self.theta, self.logistic_likelihood) * learning_rate
         for i in range(100):
             print("This is iteration {} optimizing theta.".format(i))
             self.theta += gradient_theta(self.train_data, self.train_labels,
-                                         self.w, self.theta, self.logistic_likelihood) * 0.0001
+                                         self.w, self.theta, self.logistic_likelihood) * 0.00001
+            # normalize theta
+            self.theta = (self.theta.T / np.sum(self.theta, axis=1)).T
+
+        for i in range(epoch - 50):
+            print("This is iteration {}.".format(i))
+            g = gradient(self.train_data, self.train_labels, self.w, self.theta, self.logistic_likelihood)
+            self.w += g * learning_rate
         print(self.theta)
         return self.w
 
@@ -88,9 +95,9 @@ def predictive_accuracy(proposed, true):
 
 
 if __name__ == '__main__':
-    # cleaner = Cleaner(np.eye(10))
-    cleaner = Cleaner(np.eye(10) * 0.8 + 0.02)
-    cleaner.train_logistic(learning_rate=0.001, epoch=500)
+    cleaner = Cleaner(np.eye(10))
+    # cleaner = Cleaner(np.eye(10) * 0.8 + 0.02)
+    cleaner.train_logistic(learning_rate=0.001, epoch=150)
     cleaner.metrics()
     saver = image_saver()
-    saver.save_images(cleaner.w, 'theta')
+    saver.save_images(cleaner.w, 'theta_train')

@@ -1,18 +1,20 @@
-from sklearn import tree
+from sklearn.linear_model import LogisticRegression
 import autograd.numpy as np
 from sklearn.metrics import accuracy_score
 
 
 class NoisyLabeler():
 
-    def __init__(self, train_data, train_labels, valid_data, valid_labels):
+    def __init__(self, train_data, train_labels, valid_data, valid_labels, power_level=7):
 
         print('=== Loading and Training the Labeler ===')
         self.train_data = train_data
         self.train_labels = np.argmax(train_labels, axis=1)
         self.valid_data = valid_data
         self.valid_labels = np.argmax(valid_labels, axis=1)
-        self.clf = tree.DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=4, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features=None, random_state=None, max_leaf_nodes=None, min_impurity_split=1e-07, class_weight=None, presort=False)
+
+        self.clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True, intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear', max_iter=5, multi_class='ovr', verbose=0, warm_start=False, n_jobs=1)
+
         self.clf = self.clf.fit(self.train_data, self.train_labels)
 
         print('=== Labeling Using the Labeler ===')

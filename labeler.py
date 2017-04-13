@@ -13,7 +13,8 @@ class NoisyLabeler():
         self.valid_data = valid_data
         self.valid_labels = np.argmax(valid_labels, axis=1)
 
-        self.clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True, intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear', max_iter=5, multi_class='ovr', verbose=0, warm_start=False, n_jobs=1)
+        self.clf = LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True, intercept_scaling=1, class_weight=None,
+                                      random_state=None, solver='liblinear', max_iter=power_level, multi_class='ovr', verbose=0, warm_start=False, n_jobs=1)
 
         self.clf = self.clf.fit(self.train_data, self.train_labels)
 

@@ -43,10 +43,12 @@ class Cleaner():
         gradient_theta = grad(self.weighted_likelihood, argnum=3)
         for i in range(epoch):
             print("This is iteration {}.".format(i))
-            self.w += gradient(self.train_data, self.train_labels, self.w, self.theta, self.logistic_likelihood) * learning_rate
+            self.w += gradient(self.train_data, self.train_labels, self.w,
+                               self.theta, self.logistic_likelihood) * learning_rate
         for i in range(100):
             print("This is iteration {} optimizing theta.".format(i))
-            self.theta += gradient_theta(self.train_data, self.train_labels, self.w, self.theta, self.logistic_likelihood) * 0.0001
+            self.theta += gradient_theta(self.train_data, self.train_labels,
+                                         self.w, self.theta, self.logistic_likelihood) * 0.0001
         print(self.theta)
         return self.w
 
@@ -59,9 +61,9 @@ class Cleaner():
         pred = pred_ll(self.train_data, self.w)
         test_pred = pred_ll(self.valid_data, self.w)
         print("average predictive log ll for training set is:")
-        print(np.sum(ll)/10000)
+        print(np.sum(ll) / 10000)
         print("average predictive log ll for test set is:")
-        print(np.sum(test_ll)/5000)
+        print(np.sum(test_ll) / 5000)
 
         print("average predictive accuracy for training set is:")
         print(predictive_accuracy(pred, self.true_train))
@@ -82,7 +84,7 @@ def logll(K):
 
 
 def predictive_accuracy(proposed, true):
-    return np.sum(np.equal(np.argmax(proposed, axis=1), np.argmax(true, axis=1)))/true.shape[0] * 100
+    return np.sum(np.equal(np.argmax(proposed, axis=1), np.argmax(true, axis=1))) / true.shape[0] * 100
 
 
 if __name__ == '__main__':

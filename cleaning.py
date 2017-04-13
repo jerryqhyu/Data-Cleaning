@@ -10,12 +10,36 @@ from util import data_reader
 install_aliases()
 
 
-def logit_ll(x, y, w):
-    return np.sum(np.multiply(y, (np.dot(x, w.T) - np.tile(logsumexp(np.dot(x, w.T), axis=1), 10).reshape(10, x.shape[0]).T)))
+class Logistic_Cleaner():
+
+    def __init__(self, theta):
+        reader = data_reader()
+        # saver = image_saver()
+        n, a, b, c, d = reader.load_mnist()
+        #
+        self.train_data = np.round(a)[:10000]
+        self.valid_data = np.round(c)[:5000]
+        self.train_labels = b[:10000]
+        self.valid_labels = d[:5000]
+
+        self.w = np.zeros((self.train_labels.shape[1], self.train_data.shape[1]))
+        self.theta = theta
+
+    def logistic_likelihood(self):
+        log_likelihood = logistic_ll(self.train_data, self.w)
+        return np.exp(log_likelihood)
+
+    def weighted_likelihood(self, likelihood):
+        return np.dot(self.theta, likelihood.T)
+
+    def train_logistic(self, lambda=0.01, epoch=500):
+        likelihood = self.weighted_likelihood(self.logistic_likelihood())
+        for i in epoch:
+            pass
 
 
-def logit_ll_map(x, y, w, sigma):
-    return np.sum(np.multiply(y, (np.dot(x, w.T) - np.tile(logsumexp(np.dot(x, w.T), axis=1), 10).reshape(10, x.shape[0]).T))) - np.sum(0.5 * np.log(2 * sigma**2 * np.pi) + np.power(w, 2)/2/sigma**2)
+def logistic_ll(x, w):
+    return np.dot(x, w.T) - np.tile(logsumexp(np.dot(x, w.T), axis=1), 10).reshape(10, x.shape[0]).T
 
 
 def fit_logistic(images, labels):
@@ -68,19 +92,5 @@ def predictive_accuracy(proposed, true):
 
 
 if __name__ == '__main__':
-    reader = data_reader()
-    # saver = image_saver()
-    n, a, b, c, d = reader.load_mnist()
-    #
-    a = np.round(a)
-    c = np.round(c)
-    a = a[:10000]
-    b = b[:10000]
-    c = c[:5000]
-    d = d[:5000]
-    # variational_optimization(a, b, c, d, num_iters=5001, sigma=10)
-    # w = logistic_metrics_map(a,b,c,d, 10)
-    # save_images(w, "1ce1")
-    labeler = NoisyLabeler(a, b, c, d)
-    labeler.power_level()
-    labeler.get_noisy_train_valid()
+    cleaner = Logistic_Cleaner(0)
+    cleaner.logistic_likelihood()

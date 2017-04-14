@@ -19,12 +19,12 @@ class Cleaner():
         noisy.power_level()
         a, bad, c, dad = noisy.get_noisy_train_valid()
 
-        self.true_train = b[:10000]
+        self.true_train = b[:25000]
         self.true_valid = d[:5000]
 
-        self.train_data = np.round(a)[:10000]
+        self.train_data = np.round(a)[:25000]
         self.valid_data = np.round(c)[:5000]
-        self.train_labels = bad[:10000]
+        self.train_labels = bad[:25000]
         self.valid_labels = dad[:5000]
 
         self.w = np.zeros(
@@ -57,7 +57,7 @@ class Cleaner():
                 print("This is iteration {}.".format(i))
                 self.w += gradient(self.train_data, self.train_labels, self.w,
                                    self.theta, self.logistic_likelihood) * learning_rate
-            for i in range(50):
+            for i in range(500):
                 print("This is iteration {} optimizing theta.".format(i))
                 self.theta += gradient_theta(self.train_data, self.train_labels,
                                              self.w, self.theta, self.logistic_likelihood) * 0.0001
@@ -70,6 +70,12 @@ class Cleaner():
                          self.theta, self.logistic_likelihood)
             self.w += g * learning_rate
         print(self.theta)
+
+        saver = image_saver()
+        rxw = self.logistic_likelihood(self.train_data, self.w)
+        cxw = np.dot(self.theta, self.logistic_likelihood(self.train_data, self.w).T).T
+        indices = np.where(np.equal(np.argmax(rxw, axis=1), np.argmax(self.true_train, axis=1))==False)[0][-30:]
+        saver.save_images(self.train_data[indices], 'mispredicted')
         return self.w
 
     def train_net(self, learning_rate=0.01, epoch=500):
@@ -88,7 +94,7 @@ class Cleaner():
                 self.bias_1 += learning_rate * gb1
                 self.layer_2 += learning_rate * gl2
 
-            for i in range(50):
+            for i in range(15):
                 print("This is iteration {} optimizing theta.".format(i))
                 self.theta += gradient_theta(self.layer_1, self.bias_1, self.layer_2, self.train_data, self.train_labels, self.theta) * 0.0001
                 # normalize theta
@@ -118,7 +124,7 @@ class Cleaner():
         pred = net_ll(self.layer_1, self.bias_1, self.layer_2,
                       self.train_data)
         test_pred = net_ll(self.layer_1, self.bias_1, self.layer_2,
-                          self.valid_data)
+                      self.valid_data)
         print("average predictive accuracy for training set is:")
         print(predictive_accuracy(pred, self.true_train))
         print("average predictive accuracy for test set is:")

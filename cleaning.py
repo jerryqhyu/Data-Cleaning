@@ -32,6 +32,6 @@ def execute_logistic(mode='eye', mat=np.eye(10), learning_rate=0.01, epoch=100, 
 
 
 if __name__ == '__main__':
-    mat = np.eye(10) * 0.9 + 0.01
-    # execute_net(mode='eye', mat=np.eye(10), learning_rate=0.01, epoch=100, power_level=1)
-    execute_logistic(mode='eye', mat=mat, learning_rate=0.005, epoch=500, power_level=1)
+    mat = np.eye(10)
+    # execute_net(mode='train', mat=mat, learning_rate=0.1, epoch=1500, power_level=1)
+    execute_logistic(mode='train', mat=mat, learning_rate=0.1, epoch=500, power_level=1)
